@@ -9,6 +9,23 @@
 #import "OCUDLBuiltins.h"
 #import "OCUDL.h"
 
+
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#if TARGET_IPHONE_SIMULATOR
+#define IOS_TARGET
+#elif TARGET_OS_IPHONE
+#define IOS_TARGET
+#elif TARGET_OS_MAC
+#undef IOS_TARGET
+#define UIColor NSColor
+#define UINib NSNib
+#define UIImage NSImage
+#else
+// Unsupported platform
+#endif
+#endif
+
 @interface OCUDLBuiltins ()
 
 + (void)registerNSNull;
@@ -151,17 +168,23 @@
 {
 	[[OCUDLManager defaultManager] registerSuffix:@".xib"
 										 forBlock:^id(NSString *literal, NSString *prefix) {
+#if IOS_TARGET
 											 return [UINib nibWithNibName:literal bundle:nil];
+#else
+                                             return [[UINib alloc]initWithNibNamed:literal bundle:nil];
+#endif
 										 }];
 }
 
 
 + (void)registerUIStoryboard
 {
+#if IOS_TARGET
 	[[OCUDLManager defaultManager] registerSuffix:@".storyboard"
 										 forBlock:^id(NSString *literal, NSString *prefix) {
 											 return [UIStoryboard storyboardWithName:literal bundle:nil];
 										 }];
+#endif
 }
 
 static dispatch_once_t s_pred;
