@@ -1,5 +1,5 @@
 //
-//  OCUDLBuiltins.h
+//  OCUDLUIKitBuiltins.h
 //  OCUDL
 //
 //  Created by Dustin Bachrach on 10/15/13.
@@ -11,12 +11,8 @@
 /**
  * Built-in user defined literals
  */
-@interface OCUDLBuiltins : NSObject
+@interface OCUDLUIKitBuiltins : NSObject
 
-/**
- * Enable all built-in user defined literals.
- * Must call this method before any user defined literal is created.
- */
-+ (void)use;
+void useCUDLUIKitBuiltins(void) __attribute__((constructor)) ;
 
 @end

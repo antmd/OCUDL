@@ -11,9 +11,10 @@
 /**
  * Invoked when a user defined literal should be created.
  * The first parameter is the literal.
- * The second parameter is the prefix/suffix.
+ * The second parameter is the prefix (if any).
+ * The second parameter is the suffix (if any).
  */
-typedef id (^OCUDLBlock)(NSString*, NSString*);
+typedef id (^OCUDLBlock)(NSString*, NSString*, NSString*);
 
 
 /**
@@ -68,6 +69,8 @@ typedef id (^OCUDLBlock)(NSString*, NSString*);
  * @param block The block to execute when a literal is found.
  */
 - (void)registerPrefix:(NSString*)prefix forBlock:(OCUDLBlock)block;
+
+- (void)registerPrefix:(NSString*)prefix andSuffix:(NSString*)suffix forBlock:(OCUDLBlock)block;
 
 /**
  * Registers a user defined literal for a suffix.

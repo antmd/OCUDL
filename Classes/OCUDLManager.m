@@ -47,19 +47,24 @@ static OCUDLManager *s_manager = nil;
 
 - (void)registerPrefix:(NSString*)prefix forClass:(Class<OCUDLClass>)class
 {
-    [self registerPrefix:prefix forBlock:^id(NSString *str, NSString *prefStr) {
+    [self registerPrefix:prefix forBlock:^id(NSString *str, NSString *prefStr, NSString *suffStr) {
         return (id)[[(Class)class alloc] initWithLiteral:str prefix:prefStr];
     }];
 }
 
 - (void)registerPrefix:(NSString*)prefix forBlock:(OCUDLBlock)block
 {
-	self.prefixMapping[prefix] = block;
+	self.prefixMapping[prefix] = @[NSNull.null,block];
+}
+
+- (void)registerPrefix:(NSString*)prefix andSuffix:(NSString*)suffix forBlock:(OCUDLBlock)block
+{
+	self.prefixMapping[prefix] = @[suffix,block];
 }
 
 - (void)registerSuffix:(NSString*)suffix forClass:(Class<OCUDLClass>)class
 {
-    [self registerSuffix:suffix forBlock:^id(NSString *str, NSString *suffStr) {
+    [self registerSuffix:suffix forBlock:^id(NSString *str, NSString *prefStr, NSString*suffStr) {
         return (id)[[(Class)class alloc] initWithLiteral:str suffix:suffStr];
     }];
 }
@@ -77,32 +82,48 @@ static OCUDLManager *s_manager = nil;
         return[@([obj1 length]) compare:@([obj2 length])];
     }];
     
-    for (NSString *prefix in sortedPrefixMappingKeys) {
+    OCUDLBlock block = nil;
+    NSString* prefix = nil;
+    NSString* suffix = nil;
+    
+    for (prefix in sortedPrefixMappingKeys) {
         if ([str hasPrefix:prefix]) {
+            NSString* afterPrefixStr = [str substringFromIndex:[prefix length]];
+            suffix = prefixMapping[prefix][0];
             
-            str = [str substringFromIndex:[prefix length]];
-            
-            OCUDLBlock block = prefixMapping[prefix];
-            return block(str, prefix);
+            if ((NSNull*)suffix != NSNull.null) {
+                if([afterPrefixStr hasSuffix:suffix]) {
+                    str = [ str substringToIndex:(str.length - suffix.length) ] ;
+                    block = prefixMapping[prefix][1];
+                    break;
+                }
+            }
+            else {
+                suffix = nil;
+                str = afterPrefixStr;
+                block = prefixMapping[prefix][1];
+                break;
+            }
         }
     }
     
-    NSMutableDictionary *suffixMapping = self.suffixMapping;
-    NSArray *sortedSuffixMappingKeys = [[suffixMapping allKeys] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
-        return[@([obj2 length]) compare:@([obj1 length])];
-    }];
-    
-    for (NSString *suffix in sortedSuffixMappingKeys) {
-        if ([str hasSuffix:suffix]) {
-            
-            str = [str substringToIndex:[str length] - [suffix length]];
-            
-            OCUDLBlock block = suffixMapping[suffix];
-            return block(str, suffix);
+    if (block == nil) {
+        prefix = nil;
+        NSMutableDictionary *suffixMapping = self.suffixMapping;
+        NSArray *sortedSuffixMappingKeys = [[suffixMapping allKeys] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+            return[@([obj2 length]) compare:@([obj1 length])];
+        }];
+        
+        for (NSString *suffix in sortedSuffixMappingKeys) {
+            if ([str hasSuffix:suffix]) {
+                
+                str = [str substringToIndex:[str length] - [suffix length]];
+                
+                block = suffixMapping[suffix];
+            }
         }
     }
-    
-    return nil;
+    return block ? block(str,prefix,suffix) : nil;
 }
 
 @end

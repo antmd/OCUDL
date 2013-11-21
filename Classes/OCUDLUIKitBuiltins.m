@@ -1,36 +1,17 @@
 //
-//  OCUDLBuiltins.m
+//  OCUDLUIKitBuiltins.m
 //  OCUDL
 //
 //  Created by Dustin Bachrach on 10/15/13.
 //  Copyright (c) 2013 Dustin Bachrach. All rights reserved.
 //
 
-#import "OCUDLBuiltins.h"
+#import "OCUDLUIKitBuiltins.h"
 #import "OCUDL.h"
 
 
-#ifdef __APPLE__
-#include "TargetConditionals.h"
-#if TARGET_IPHONE_SIMULATOR
-#define IOS_TARGET
-#elif TARGET_OS_IPHONE
-#define IOS_TARGET
-#elif TARGET_OS_MAC
-#undef IOS_TARGET
-#define UIColor NSColor
-#define UINib NSNib
-#define UIImage NSImage
-#else
-// Unsupported platform
-#endif
-#endif
+@interface OCUDLUIKitBuiltins ()
 
-@interface OCUDLBuiltins ()
-
-+ (void)registerNSNull;
-+ (void)registerNSURL;
-+ (void)registerNSUUID;
 + (void)registerUIColor;
 + (void)registerUIImage;
 + (void)registerUINib;
@@ -38,32 +19,7 @@
 
 @end
 
-@implementation OCUDLBuiltins
-
-+ (void)registerNSNull
-{
-	[[OCUDLManager defaultManager] registerPrefix:@"null"
-										 forBlock:^id(NSString *literal, NSString *prefix) {
-											 return [NSNull null];
-										 }];
-}
-
-+ (void)registerNSURL
-{
-	OCUDLBlock urlBlock = ^id(NSString *literal, NSString *prefix) {
-		return [NSURL URLWithString:[NSString stringWithFormat:@"%@//%@", prefix, literal]];
-	};
-	[[OCUDLManager defaultManager] registerPrefix:@"http:" forBlock:urlBlock];
-	[[OCUDLManager defaultManager] registerPrefix:@"https:" forBlock:urlBlock];
-}
-
-+ (void)registerNSUUID
-{
-	[[OCUDLManager defaultManager] registerSuffix:@"uuid"
-										 forBlock:^id(NSString *literal, NSString *prefix) {
-											 return [[NSUUID alloc] initWithUUIDString:literal];
-										 }];
-}
+@implementation OCUDLUIKitBuiltins
 
 + (void)registerUIColor
 {
@@ -168,37 +124,28 @@
 {
 	[[OCUDLManager defaultManager] registerSuffix:@".xib"
 										 forBlock:^id(NSString *literal, NSString *prefix) {
-#if IOS_TARGET
 											 return [UINib nibWithNibName:literal bundle:nil];
-#else
-                                             return [[UINib alloc]initWithNibNamed:literal bundle:nil];
-#endif
 										 }];
 }
 
 
 + (void)registerUIStoryboard
 {
-#if IOS_TARGET
 	[[OCUDLManager defaultManager] registerSuffix:@".storyboard"
 										 forBlock:^id(NSString *literal, NSString *prefix) {
 											 return [UIStoryboard storyboardWithName:literal bundle:nil];
 										 }];
-#endif
 }
 
 static dispatch_once_t s_pred;
 
-+ (void)use
+void useCUDLUIKitBuiltins(void)
 {
 	dispatch_once(&s_pred, ^{
-		[OCUDLBuiltins registerNSNull];
-		[OCUDLBuiltins registerNSURL];
-		[OCUDLBuiltins registerNSUUID];
-		[OCUDLBuiltins registerUIColor];
-		[OCUDLBuiltins registerUIImage];
-		[OCUDLBuiltins registerUINib];
-		[OCUDLBuiltins registerUIStoryboard];
+		[OCUDLUIKitBuiltins registerUIColor];
+		[OCUDLUIKitBuiltins registerUIImage];
+		[OCUDLUIKitBuiltins registerUINib];
+		[OCUDLUIKitBuiltins registerUIStoryboard];
 	});
 }
 
